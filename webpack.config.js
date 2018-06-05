@@ -71,7 +71,8 @@ module.exports = {
   },
   resolve: {
     alias: {
-      'vue$': 'vue/dist/vue.esm.js'
+      'vue$': 'vue/dist/vue.esm.js',
+      tagcanvas: 'vendor/tagcanvas.js'
     },
     extensions: ['*', '.js', '.vue', '.json']
   },
@@ -103,6 +104,9 @@ if (process.env.NODE_ENV === 'production') {
     }),
     new webpack.LoaderOptionsPlugin({
       minimize: true
+    }),
+    new webpack.ProvidePlugin({
+      TagCanvas: 'tagcanvas'
     })
   ])
 }

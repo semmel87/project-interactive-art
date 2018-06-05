@@ -4,7 +4,11 @@
       <v-container fluid>
         <v-layout column fill-height>
           <v-flex fill-height mb-3>
-            <div class="cloud-container fill-height" ref="cloudContainer"></div>
+            <canvas id="cloudCanvas" v-show="canvasVisible" width="300" height="300">
+              <ul>
+                <li v-for="word in cloudWords"><a href="#" :data-weight="word.count">{{word.text}}</a></li>
+              </ul>
+            </canvas>
           </v-flex>
           <v-layout row wrap align-center>
             <v-flex xs5 offset-xs3>
@@ -31,7 +35,7 @@
 <script>
   import Vue from 'vue';
   import Vuetify from 'vuetify';
-  import WordCloud from 'wordcloud';
+  import { TagCanvas } from './vendor/tagcanvas';
   import { map } from 'lodash';
 
   Vue.use(Vuetify);
@@ -40,6 +44,7 @@
     name: 'app',
     data () {
       return {
+        canvasVisible: true,
         initialWords: {
           //Samu: 1,
           //Anni: 2,
@@ -51,7 +56,7 @@
     },
     computed: {
       cloudWords() {
-        return map(this.wordsInCloud, (count, word) => [word, count]);
+        return map(this.wordsInCloud, (count, word) => ({ text: word, count: count }));
       }
     },
     mounted() {
@@ -64,23 +69,30 @@
         Vue.set(this.wordsInCloud, this.userInput, currentCount ? (currentCount + 1) : 1);
 
         this.resetUserInput();
-        Vue.nextTick(this.createWordCloud);
+        Vue.nextTick(this.updateWordCloud);
       },
       resetUserInput() {
         this.userInput = '';
       },
       createWordCloud() {
         const config = {
-          weightFactor: 30,
-          wait: 550,
-          rotationSteps: 2,
-          minRotation: -1.5708,
-          maxRotation: 1.5708,
-          rotateRatio: 0.5,
-          classes: 'fadeInLeft animated',
-          list: this.cloudWords
+          weight: true,
+          weightFrom: 'data-weight',
+          weightSize: 5,
+          weightGradient: {
+            0: "#f00", 0.33: "#ff0", 0.66: "#0f0", 1: "#00f"
+          },
+          minSpeed: 0.005,
+          clickToFront: 1000
         };
-        WordCloud(this.$refs.cloudContainer, config);
+        try {
+          window.TagCanvas.Start('cloudCanvas', '', config);
+        } catch (e) {
+          this.canvasVisible = false;
+        }
+      },
+      updateWordCloud() {
+        window.TagCanvas.Update('cloudCanvas');
       }
     }
 }
