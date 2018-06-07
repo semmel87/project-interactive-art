@@ -7,7 +7,7 @@
             <canvas :id="CANVAS_ID" v-show="canvasVisible" :width="canvasWidth" :height="canvasHeight">
               <ul>
                 <li v-for="word in cloudWords">
-                  <a href="#" :data-weight="word.count" @click="resumeAfterShortBreak">{{word.text}}</a>
+                  <a href="#" :data-weight="word.count" @click="resumeAfter(undefined)">{{word.text}}</a>
                 </li>
               </ul>
             </canvas>
@@ -88,7 +88,7 @@
         Vue.nextTick(() => {
           this.updateWordCloud();
           this.bringTagToFront(input);
-          this.resumeAfterShortBreak();
+          this.resumeAfter()();
         });
       },
       createWordCloud() {
@@ -129,8 +129,8 @@
 
         Vue.nextTick(this.createWordCloud);
       },
-      resumeAfterShortBreak() {
-        setTimeout(this.resumeWordCloud, 3000);
+      resumeAfter(delay = 3000) {
+        setTimeout(this.resumeWordCloud, delay);
       }
     }
 }
