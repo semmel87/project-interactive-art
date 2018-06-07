@@ -7,7 +7,7 @@
             <canvas :id="CANVAS_ID" v-show="canvasVisible" :width="canvasWidth" :height="canvasHeight">
               <ul>
                 <li v-for="word in cloudWords">
-                  <a href="#" :data-weight="word.count">{{word.text}}</a>
+                  <a href="#" :data-weight="word.count" @click="resumeAfterShortBreak">{{word.text}}</a>
                 </li>
               </ul>
             </canvas>
@@ -43,6 +43,7 @@
   Vue.use(Vuetify);
 
   const CANVAS_ID = 'cloudCanvas';
+  const INITIAL_MOVEMENT = [0.1,-0.1];
 
   export default {
     name: 'app',
@@ -79,14 +80,16 @@
     },
     methods: {
       addUserInputToCloud() {
-        const currentCount = this.wordsInCloud[this.userInput];
-        Vue.set(this.wordsInCloud, this.userInput, currentCount ? (currentCount + 1) : 1);
+        const input = this.userInput;
+        const currentCount = this.wordsInCloud[input];
+        Vue.set(this.wordsInCloud, input, currentCount ? (currentCount + 1) : 1);
 
-        this.resetUserInput();
-        Vue.nextTick(this.updateWordCloud);
-      },
-      resetUserInput() {
         this.userInput = '';
+        Vue.nextTick(() => {
+          this.updateWordCloud();
+          this.bringTagToFront(input);
+          this.resumeAfterShortBreak();
+        });
       },
       createWordCloud() {
         const config = {
@@ -100,9 +103,10 @@
           },
           outlineColour: 'transparent',
           minSpeed: 0.005,
-          initial: [0.1,-0.1],
+          initial: INITIAL_MOVEMENT,
           fadeIn: 800,
-          clickToFront: 1000
+          clickToFront: 1000,
+          dragControl: true
         };
         try {
           window.TagCanvas.Start(CANVAS_ID, '', config);
@@ -113,11 +117,20 @@
       updateWordCloud() {
         window.TagCanvas.Update(CANVAS_ID);
       },
+      resumeWordCloud() {
+        window.TagCanvas.SetSpeed(CANVAS_ID, INITIAL_MOVEMENT);
+      },
+      bringTagToFront(tagText) {
+        window.TagCanvas.TagToFront(CANVAS_ID, { text: tagText });
+      },
       updateCanvasAndCreateCloud() {
         this.canvasWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
         this.canvasHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0) - 130;
 
         Vue.nextTick(this.createWordCloud);
+      },
+      resumeAfterShortBreak() {
+        setTimeout(this.resumeWordCloud, 3000);
       }
     }
 }
