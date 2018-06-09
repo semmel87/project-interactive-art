@@ -1,0 +1,9 @@
+@font-face {
+  font-family: 'Raleway';
+  src: url('../font/raleway-v4013-regular-webfont.woff2') format('woff2'),
+  url('../font/raleway-v4013-regular-webfont.woff') format('woff'),
+  url('../font/raleway-v4013-regular-webfont.ttf') format('truetype'),
+  url('../font/raleway-v4013-regular-webfont.svg#ralewayregular') format('svg');
+  font-weight: 400;
+  font-style: normal;
+}

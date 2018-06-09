@@ -8,7 +8,7 @@
         :clipped-left="$vuetify.breakpoint.mdAndUp"
         fixed>
         <v-toolbar-title>
-          App-Name
+          Interaktive Umfrage
         </v-toolbar-title>
         <v-spacer></v-spacer>
         <v-btn icon>
@@ -17,7 +17,7 @@
       </v-toolbar>
       <v-content>
         <v-layout column fill-height>
-          <h1 class="mt-5 text-xs-center">Wo war deine geilste Party?</h1>
+          <h1 class="title mt-5 text-xs-center">Wo war deine geilste Party?</h1>
           <v-layout column fill-height>
             <v-flex fill-height ref="canvasContainer">
               <canvas :id="CANVAS_ID"
@@ -137,6 +137,7 @@
             1: '#a8c0ff'
           },
           outlineColour: 'transparent',
+          textFont: 'Raleway',
           minSpeed: 0.005,
           initial: INITIAL_MOVEMENT,
           fadeIn: 800,
@@ -212,9 +213,12 @@
     overflow-y: auto;
   }
   #app {
-    font-family: 'Avenir', Helvetica, Arial, sans-serif;
+    font-family: 'Raleway', Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     background-color: #fff;
+  }
+  .title {
+    font-size: 4em !important;
   }
 </style>
