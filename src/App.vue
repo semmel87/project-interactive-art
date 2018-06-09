@@ -99,7 +99,9 @@
     },
     created() {
       window.addEventListener('resize', this.updateCanvasAndCreateCloud);
-      window.addEventListener('mousemove', this.initializeRandomRotation);
+      ['mousemove', 'touchmove', 'keydown'].map((e) => {
+        window.addEventListener(e, this.initializeRandomRotation);
+      });
     },
     mounted() {
       this.wordsInCloud = this.initialWords;
@@ -108,7 +110,9 @@
     },
     beforeDestroy() {
       window.TagCanvas.Delete(CANVAS_ID);
-      window.addEventListener('mousemove', this.initializeRandomRotation);
+      ['mousemove', 'touchmove', 'keydown'].map((e) => {
+        window.removeEventListener(e, this.initializeRandomRotation);
+      });
       window.removeEventListener('resize', this.updateCanvasAndCreateCloud);
     },
     methods: {
