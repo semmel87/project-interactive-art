@@ -2,7 +2,7 @@
   <div id="app">
     <v-app>
       <v-toolbar
-        color="blue darken-3"
+        color="red lighten-3"
         dark
         app
         :clipped-left="$vuetify.breakpoint.mdAndUp"
@@ -89,7 +89,8 @@
         wordsInCloud: {},
         userInput: '',
         highlightTimer: null,
-        randomRotationTimer: null
+        randomRotationTimer: null,
+        shakeCounter: 0
       };
     },
     computed: {
@@ -127,7 +128,7 @@
         this.userInput = '';
         Vue.nextTick(() => {
           this.updateWordCloud();
-          this.bringTagToFront(input);
+          this.bringTagToFront(input, false);
         });
       },
       createWordCloud() {
@@ -137,8 +138,9 @@
           weightMode: 'both',
           weightSize: 10,
           weightGradient: {
-            0: '#3f2b96',
-            1: '#a8c0ff'
+            0: '#b11743',
+            0.5: '#febd2e',
+            1: '#90fefb'
           },
           outlineColour: 'transparent',
           textFont: 'Raleway',
@@ -167,14 +169,16 @@
 
         window.TagCanvas.SetSpeed(CANVAS_ID, movement);
       },
-      bringTagToFront(tagId) {
+      bringTagToFront(tagId, shake = true) {
         window.TagCanvas
           .TagToFront(
             CANVAS_ID,
             {
               id: tagId,
               time: ROTATION_DURATION,
-              callback: () => this.resumeAfter()
+              callback: () => shake
+                ? this.shake(tagId)
+                : this.resumeAfter()
             }
           );
       },
@@ -184,9 +188,36 @@
 
         Vue.nextTick(this.createWordCloud);
       },
-      resumeAfter(delay = 3000) {
+      resumeAfter(delay = 2000) {
         clearTimeout(this.highlightTimer);
         this.highlightTimer = setTimeout(() => this.resumeWordCloud(), delay);
+      },
+      shake(tagId) {
+        this.shakeCounter = 0;
+        const shakeDefinedTimes = () => {
+          if (this.shakeCounter < 5) {
+            this.shakeCounter++;
+            this.doSingleShake(tagId, shakeDefinedTimes);
+          } else {
+            this.shakeCounter = 0;
+            this.resumeWordCloud();
+          }
+        };
+
+        this.doSingleShake(tagId, shakeDefinedTimes);
+      },
+      doSingleShake(tagId, callback) {
+        window.TagCanvas
+          .RotateTag(
+            CANVAS_ID,
+            {
+              id: tagId,
+              lat: this.getRandomInt(-10, 10),
+              lng: this.getRandomInt(-20, 20),
+              time: 100,
+              callback: callback
+            }
+          );
       },
       initializeRandomRotation() {
         clearInterval(this.randomRotationTimer);
@@ -224,5 +255,6 @@
   }
   .title {
     font-size: 4em !important;
+    color: palevioletred;
   }
 </style>
