@@ -11,8 +11,11 @@
           Interaktive Umfrage
         </v-toolbar-title>
         <v-spacer></v-spacer>
-        <v-btn icon>
-          <v-icon>info</v-icon>
+        <v-btn icon @click.native.stop="resetModalVisible = true">
+          <v-icon>replay</v-icon>
+        </v-btn>
+        <v-btn icon @click.native.stop="infoModalVisible = true">
+          <v-icon>feedback</v-icon>
         </v-btn>
       </v-toolbar>
       <v-content>
@@ -57,6 +60,17 @@
           </v-layout>
         </v-layout>
       </v-content>
+      <reset-modal
+        v-if="resetModalVisible"
+        :visible="resetModalVisible"
+        @cancel="resetModalVisible = false"
+        @ok="resetWordCloud">
+      </reset-modal>
+      <info-modal
+        v-if="infoModalVisible"
+        :visible="infoModalVisible"
+        @ok="infoModalVisible = false">
+      </info-modal>
     </v-app>
   </div>
 </template>
@@ -66,70 +80,68 @@
   import Vuetify from 'vuetify';
   import { TagCanvas } from './vendor/tagcanvas';
   import { map } from 'lodash';
-
-  import INITIAL_WORDS from './initialWords';
+  import WordStorage from './storage/WordStorage';
+  import ResetModal from './modals/ResetModal';
+  import InfoModal from './modals/InfoModal';
 
   Vue.use(Vuetify);
 
   const CANVAS_ID = 'cloudCanvas';
   const INITIAL_MOVEMENT = [0.1,-0.1];
-  const INITIAL_WEIGHT = 3;
   const ROTATION_DURATION = 750;
   const ROTATION_INTERVAL = 10000;
 
   export default {
     name: 'app',
+    mixins: [
+      WordStorage
+    ],
+    components: {
+      ResetModal,
+      InfoModal
+    },
     data () {
       return {
         CANVAS_ID,
         canvasVisible: true,
         canvasWidth: 0,
         canvasHeight: 0,
-        initialWords: INITIAL_WORDS,
-        wordsInCloud: {},
         userInput: '',
         highlightTimer: null,
         randomRotationTimer: null,
-        shakeCounter: 0
+        shakeCounter: 0,
+        resetModalVisible: false,
+        infoModalVisible: false
       };
     },
     computed: {
       cloudWords() {
-        return map(this.wordsInCloud, (count, word) => ({ text: word, count: count }));
+        return map(this.words, (count, word) => ({ text: word, count: count }));
       }
     },
     created() {
       window.addEventListener('resize', this.updateCanvasAndCreateCloud);
-      ['mousemove', 'touchmove', 'keydown'].map((e) => {
+      ['mousemove', 'touchmove', 'touchend', 'keyup'].map((e) => {
         window.addEventListener(e, this.initializeRandomRotation);
       });
     },
     mounted() {
-      this.wordsInCloud = this.initialWords;
       this.updateCanvasAndCreateCloud();
       this.initializeRandomRotation();
     },
     beforeDestroy() {
       window.TagCanvas.Delete(CANVAS_ID);
-      ['mousemove', 'touchmove', 'keydown'].map((e) => {
+      ['mousemove', 'touchmove', 'touchend', 'keyup'].map((e) => {
         window.removeEventListener(e, this.initializeRandomRotation);
       });
       window.removeEventListener('resize', this.updateCanvasAndCreateCloud);
     },
     methods: {
-      addUserInputToCloud() {
-        const input = this.userInput.trim();
-        if (input === '')
-          return;
+      updateCanvasAndCreateCloud() {
+        this.canvasWidth = this.$refs.canvasContainer.offsetWidth;
+        this.canvasHeight = this.$refs.canvasContainer.offsetHeight - 32;
 
-        const currentCount = this.wordsInCloud[input];
-        Vue.set(this.wordsInCloud, input, currentCount ? (currentCount + 1) : INITIAL_WEIGHT);
-
-        this.userInput = '';
-        Vue.nextTick(() => {
-          this.updateWordCloud();
-          this.bringTagToFront(input, false);
-        });
+        Vue.nextTick(this.createWordCloud);
       },
       createWordCloud() {
         const config = {
@@ -155,6 +167,19 @@
           this.canvasVisible = false;
         }
       },
+      addUserInputToCloud() {
+        const input = this.userInput.trim();
+        if (input === '')
+          return;
+
+        this.addWord(input);
+
+        this.userInput = '';
+        Vue.nextTick(() => {
+          this.updateWordCloud();
+          this.bringTagToFront(input, false);
+        });
+      },
       updateWordCloud() {
         window.TagCanvas.Update(CANVAS_ID);
       },
@@ -169,6 +194,12 @@
 
         window.TagCanvas.SetSpeed(CANVAS_ID, movement);
       },
+      resetWordCloud() {
+        this.resetModalVisible = false;
+        this.resetInitialWords();
+
+        Vue.nextTick(this.createWordCloud);
+      },
       bringTagToFront(tagId, shake = true) {
         window.TagCanvas
           .TagToFront(
@@ -181,12 +212,6 @@
                 : this.resumeAfter()
             }
           );
-      },
-      updateCanvasAndCreateCloud() {
-        this.canvasWidth = this.$refs.canvasContainer.offsetWidth;
-        this.canvasHeight = this.$refs.canvasContainer.offsetHeight - 32;
-
-        Vue.nextTick(this.createWordCloud);
       },
       resumeAfter(delay = 2000) {
         clearTimeout(this.highlightTimer);
