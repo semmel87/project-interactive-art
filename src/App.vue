@@ -120,7 +120,7 @@
       }
     },
     created() {
-      window.addEventListener('resize', this.updateCanvasAndCreateCloud);
+      window.addEventListener('resize', this.updateCanvasAndRecreateCloud);
       ['mousemove', 'touchmove', 'touchend', 'keyup'].map((e) => {
         window.addEventListener(e, this.initializeRandomRotation);
       });
@@ -134,13 +134,27 @@
       ['mousemove', 'touchmove', 'touchend', 'keyup'].map((e) => {
         window.removeEventListener(e, this.initializeRandomRotation);
       });
-      window.removeEventListener('resize', this.updateCanvasAndCreateCloud);
+      window.removeEventListener('resize', this.updateCanvasAndRecreateCloud);
     },
     methods: {
-      updateCanvasAndCreateCloud() {
+      setCanvasDimensions() {
         this.canvasWidth = this.$refs.canvasContainer.offsetWidth;
         this.canvasHeight = this.$refs.canvasContainer.offsetHeight - 32;
-
+      },
+      updateCanvasAndCreateCloud() {
+        if (!window.onload) {
+          this.setCanvasDimensions();
+          window.onload = () => {
+            this.loaded = true;
+            this.createWordCloud();
+          };
+        } else {
+          this.updateCanvasAndRecreateCloud();
+        }
+      },
+      updateCanvasAndRecreateCloud() {
+        this.setCanvasDimensions();
+        window.TagCanvas.Delete(CANVAS_ID);
         Vue.nextTick(this.createWordCloud);
       },
       createWordCloud() {
