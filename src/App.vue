@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <div id="app" @click.ctrl="dangerousActionsVisible = !dangerousActionsVisible">
     <v-app>
       <v-toolbar
         color="red lighten-3"
@@ -11,12 +11,17 @@
           Interaktive Umfrage
         </v-toolbar-title>
         <v-spacer></v-spacer>
-        <v-btn icon @click.native.stop="removeModalVisible = true">
-          <v-icon>delete</v-icon>
-        </v-btn>
-        <v-btn icon @click.native.stop="resetModalVisible = true">
-          <v-icon>replay</v-icon>
-        </v-btn>
+        <template v-if="dangerousActionsVisible">
+          <v-btn icon :disabled="previousWords.length === 0" @click.native.stop="undoLastOperation">
+            <v-icon>undo</v-icon>
+          </v-btn>
+          <v-btn icon @click.native.stop="removeModalVisible = true">
+            <v-icon>delete</v-icon>
+          </v-btn>
+          <v-btn icon @click.native.stop="resetModalVisible = true">
+            <v-icon>replay</v-icon>
+          </v-btn>
+        </template>
         <v-btn icon @click.native.stop="infoModalVisible = true">
           <v-icon>feedback</v-icon>
         </v-btn>
@@ -45,19 +50,13 @@
             <v-layout row wrap align-center mt-3 mb-3>
               <v-flex xs5 offset-xs3>
                 <v-text-field
-                  ref="inputField"
-                  name="new-word"
                   label="Füge einen Ort oder eine Location hinzu"
                   v-model="userInput"
-                  @keyup.enter="addUserInputToCloud"
-                  @blur="userInput = ''">
+                  @keyup.enter="addUserInputToCloud">
                 </v-text-field>
               </v-flex>
               <v-flex xs1>
-                <v-btn ref="canvas"
-                  @click.native="addUserInputToCloud">
-                  Hinzufügen
-                </v-btn>
+                <v-btn @click.native="addUserInputToCloud">Hinzufügen</v-btn>
               </v-flex>
             </v-layout>
           </v-layout>
@@ -121,6 +120,7 @@
         highlightTimer: null,
         randomRotationTimer: null,
         shakeCounter: 0,
+        dangerousActionsVisible: false,
         removeModalVisible: false,
         resetModalVisible: false,
         infoModalVisible: false
@@ -209,6 +209,11 @@
       removeWordFromCloud(wordToRemove) {
         this.removeModalVisible = false;
         this.removeWord(wordToRemove);
+
+        Vue.nextTick(this.updateWordCloud);
+      },
+      undoLastOperation() {
+        this.resetPreviousState();
 
         Vue.nextTick(this.updateWordCloud);
       },

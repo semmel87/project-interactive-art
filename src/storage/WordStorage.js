@@ -7,7 +7,8 @@ const INITIAL_WEIGHT = 3;
 export default {
   data() {
     return {
-      words: {}
+      words: {},
+      previousWords: []
     };
   },
   watch: {
@@ -41,11 +42,20 @@ export default {
     resetInitialWords() {
       this.words = this.getInitialWords();
     },
+    resetPreviousState() {
+      this.words = this.previousWords[this.previousWords.length - 1];
+      this.previousWords.splice(this.previousWords.length - 1, 1);
+    },
+    addCurrentStateToHistory() {
+      this.previousWords[this.previousWords.length] = Object.assign({}, this.words); // to make it possible to track changes
+    },
     addWord(wordToAdd) {
+      this.addCurrentStateToHistory();
       const currentCount = this.words[wordToAdd];
       Vue.set(this.words, wordToAdd, currentCount ? (currentCount + 1) : INITIAL_WEIGHT);
     },
     removeWord(wordToRemove) {
+      this.addCurrentStateToHistory();
       Vue.delete(this.words, wordToRemove);
     }
   }

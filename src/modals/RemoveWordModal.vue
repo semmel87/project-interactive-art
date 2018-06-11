@@ -5,7 +5,6 @@
       <v-card-text>
       <v-form>
         <v-text-field
-          name="delete-word"
           label="Welches Wort möchtest du löschen?"
           v-model="userInput"
           @keyup.enter="emitRemove">
