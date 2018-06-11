@@ -11,6 +11,9 @@
           Interaktive Umfrage
         </v-toolbar-title>
         <v-spacer></v-spacer>
+        <v-btn icon @click.native.stop="removeModalVisible = true">
+          <v-icon>delete</v-icon>
+        </v-btn>
         <v-btn icon @click.native.stop="resetModalVisible = true">
           <v-icon>replay</v-icon>
         </v-btn>
@@ -60,6 +63,12 @@
           </v-layout>
         </v-layout>
       </v-content>
+      <remove-word-modal
+        v-if="removeModalVisible"
+        :visible="removeModalVisible"
+        @cancel="removeModalVisible = false"
+        @remove="removeWordFromCloud">
+      </remove-word-modal>
       <reset-modal
         v-if="resetModalVisible"
         :visible="resetModalVisible"
@@ -81,6 +90,7 @@
   import { TagCanvas } from './vendor/tagcanvas';
   import { map } from 'lodash';
   import WordStorage from './storage/WordStorage';
+  import RemoveWordModal from './modals/RemoveWordModal';
   import ResetModal from './modals/ResetModal';
   import InfoModal from './modals/InfoModal';
 
@@ -97,6 +107,7 @@
       WordStorage
     ],
     components: {
+      RemoveWordModal,
       ResetModal,
       InfoModal
     },
@@ -110,6 +121,7 @@
         highlightTimer: null,
         randomRotationTimer: null,
         shakeCounter: 0,
+        removeModalVisible: false,
         resetModalVisible: false,
         infoModalVisible: false
       };
@@ -193,6 +205,12 @@
           this.updateWordCloud();
           this.bringTagToFront(input, false);
         });
+      },
+      removeWordFromCloud(wordToRemove) {
+        this.removeModalVisible = false;
+        this.removeWord(wordToRemove);
+
+        Vue.nextTick(this.updateWordCloud);
       },
       updateWordCloud() {
         window.TagCanvas.Update(CANVAS_ID);

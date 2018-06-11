@@ -44,6 +44,9 @@ export default {
     addWord(wordToAdd) {
       const currentCount = this.words[wordToAdd];
       Vue.set(this.words, wordToAdd, currentCount ? (currentCount + 1) : INITIAL_WEIGHT);
+    },
+    removeWord(wordToRemove) {
+      Vue.delete(this.words, wordToRemove);
     }
   }
 }
