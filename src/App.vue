@@ -11,6 +11,11 @@
           Interaktive Umfrage
         </v-toolbar-title>
         <v-spacer></v-spacer>
+        <v-btn v-if="userMediaSupported" icon @click.native.stop="recording = !recording">
+          <v-icon v-if="recording">mic_off</v-icon>
+          <v-icon v-else>mic</v-icon>
+        </v-btn>
+        <v-spacer></v-spacer>
         <template v-if="dangerousActionsVisible">
           <v-btn icon :disabled="previousWords.length === 0" @click.native.stop="undoLastOperation">
             <v-icon>undo</v-icon>
@@ -87,8 +92,10 @@
   import Vue from 'vue';
   import Vuetify from 'vuetify';
   import { TagCanvas } from './vendor/tagcanvas';
-  import { map } from 'lodash';
+  import { debounce, map } from 'lodash';
+  import { INITIAL_MOVEMENT, DEFAULT_CONFIG, getNextSpecialConfig } from './CloudConfigs';
   import WordStorage from './storage/WordStorage';
+  import AudioStreamProcessor from './audio/AudioStreamProcessor';
   import RemoveWordModal from './modals/RemoveWordModal';
   import ResetModal from './modals/ResetModal';
   import InfoModal from './modals/InfoModal';
@@ -96,14 +103,14 @@
   Vue.use(Vuetify);
 
   const CANVAS_ID = 'cloudCanvas';
-  const INITIAL_MOVEMENT = [0.1,-0.1];
   const ROTATION_DURATION = 750;
   const ROTATION_INTERVAL = 10000;
 
   export default {
     name: 'app',
     mixins: [
-      WordStorage
+      WordStorage,
+      AudioStreamProcessor
     ],
     components: {
       RemoveWordModal,
@@ -116,6 +123,7 @@
         canvasVisible: true,
         canvasWidth: 0,
         canvasHeight: 0,
+        cloudConfig: DEFAULT_CONFIG,
         userInput: '',
         highlightTimer: null,
         randomRotationTimer: null,
@@ -123,7 +131,8 @@
         dangerousActionsVisible: false,
         removeModalVisible: false,
         resetModalVisible: false,
-        infoModalVisible: false
+        infoModalVisible: false,
+        recording: false
       };
     },
     computed: {
@@ -131,21 +140,28 @@
         return map(this.words, (count, word) => ({ text: word, count: count }));
       }
     },
+    watch: {
+      recording(recording) {
+        if (recording) {
+          this.stopRandomRotation();
+          this.startCapturingAudio();
+        } else {
+          this.stopCapturingAudio();
+          this.initializeRandomRotation();
+        }
+      }
+    },
     created() {
       window.addEventListener('resize', this.updateCanvasAndRecreateCloud);
-      ['mousemove', 'touchmove', 'touchend', 'keyup'].map((e) => {
-        window.addEventListener(e, this.initializeRandomRotation);
-      });
+      this.initializeRandomRotation();
     },
     mounted() {
       this.updateCanvasAndCreateCloud();
-      this.initializeRandomRotation();
+      this.stopAndRestartRandomRotation();
     },
     beforeDestroy() {
       window.TagCanvas.Delete(CANVAS_ID);
-      ['mousemove', 'touchmove', 'touchend', 'keyup'].map((e) => {
-        window.removeEventListener(e, this.initializeRandomRotation);
-      });
+      this.stopRandomRotation();
       window.removeEventListener('resize', this.updateCanvasAndRecreateCloud);
     },
     methods: {
@@ -170,25 +186,8 @@
         Vue.nextTick(this.createWordCloud);
       },
       createWordCloud() {
-        const config = {
-          weight: true,
-          weightFrom: 'data-weight',
-          weightMode: 'both',
-          weightSize: 10,
-          weightGradient: {
-            0: '#b11743',
-            0.5: '#febd2e',
-            1: '#90fefb'
-          },
-          outlineColour: 'transparent',
-          textFont: 'Raleway',
-          minSpeed: 0.005,
-          initial: INITIAL_MOVEMENT,
-          fadeIn: 800,
-          dragControl: true
-        };
         try {
-          window.TagCanvas.Start(CANVAS_ID, '', config);
+          window.TagCanvas.Start(CANVAS_ID, '', this.cloudConfig);
         } catch (e) {
           this.canvasVisible = false;
         }
@@ -282,6 +281,17 @@
           );
       },
       initializeRandomRotation() {
+        ['mousemove', 'touchmove', 'touchend', 'keyup'].map((e) => {
+          window.addEventListener(e, this.stopAndRestartRandomRotation);
+        });
+      },
+      stopRandomRotation() {
+        clearInterval(this.randomRotationTimer);
+        ['mousemove', 'touchmove', 'touchend', 'keyup'].map((e) => {
+          window.removeEventListener(e, this.stopAndRestartRandomRotation);
+        });
+      },
+      stopAndRestartRandomRotation() {
         clearInterval(this.randomRotationTimer);
         this.randomRotationTimer = setInterval(() => {
           const randomIndex = this.getRandomInt(0, this.cloudWords.length - 1);
@@ -300,7 +310,11 @@
       },
       getRandomInt(min, max) {
         return Math.floor(Math.random() * Math.floor(max - min)) + min;
-      }
+      },
+      respondToPeak: debounce(function() {
+        this.cloudConfig = getNextSpecialConfig();
+        this.updateCanvasAndRecreateCloud();
+      }, 1000, { leading: true })
     }
   }
 </script>
