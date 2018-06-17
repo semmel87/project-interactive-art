@@ -132,7 +132,9 @@
         removeModalVisible: false,
         resetModalVisible: false,
         infoModalVisible: false,
-        recording: false
+        recording: false,
+        growing: true,
+        belowThreshold: 0
       };
     },
     computed: {
@@ -311,10 +313,38 @@
       getRandomInt(min, max) {
         return Math.floor(Math.random() * Math.floor(max - min)) + min;
       },
-      respondToPeak: debounce(function() {
-        this.cloudConfig = getNextSpecialConfig();
-        this.updateCanvasAndRecreateCloud();
-      }, 1000, { leading: true })
+      respondToPeak(max) {
+        const currentZoom = window.TagCanvas.tc[CANVAS_ID].zoom;
+
+        if (max > 0.4) {
+          this.belowThreshold = 0;
+          const zoomCount = Math.floor(max * 50);
+          const nextZoom = currentZoom + DEFAULT_CONFIG.zoomStep * (this.growing ? 1 : -1);
+          if (nextZoom < DEFAULT_CONFIG.zoomMin || nextZoom > DEFAULT_CONFIG.zoomMax) {
+            this.growing = !this.growing;
+          }
+          this.zoom(zoomCount, this.growing);
+        } else {
+          this.belowThreshold++;
+          if (this.belowThreshold > 10) {
+            const diffToNormal = currentZoom < 1 ? 1 - currentZoom : currentZoom - 1;
+            console.log('diff: ' + diffToNormal, 'steps: ' + Math.floor(diffToNormal / DEFAULT_CONFIG.zoomStep));
+            if (diffToNormal >= DEFAULT_CONFIG.zoomStep)
+              this.zoom(Math.floor(diffToNormal / DEFAULT_CONFIG.zoomStep), currentZoom < 1);
+          }
+        }
+      },
+      zoom(steps, direction) {
+        let zooms = 0;
+        const doSingleZoomStep = () => {
+          window.TagCanvas.Zoom(CANVAS_ID, direction);
+          zooms++;
+          if (zooms < steps) {
+            setTimeout(doSingleZoomStep, 20);
+          }
+        };
+        doSingleZoomStep();
+      }
     }
   }
 </script>

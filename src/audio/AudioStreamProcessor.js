@@ -60,21 +60,20 @@ export default {
 
         const min = Math.min(...data);
         const max = Math.max(...data);
-        // console.log('min ' + min + ' max ' + max);
         const threshold = min + (max - min) * 0.98;
 
-        if (max > 0.5)
-          this.respondToPeak();
+        //if (max > 0.4)
+          this.respondToPeak(max);
 
         //if (threshold > 0.01)
         //  console.log(threshold);
 
-        let peak;
-        for (let i = 0; i < data.length; i++) {
-          if (data[i] > threshold)
-            peak = data[i];
-            break;
-        }
+        //let peak;
+        //for (let i = 0; i < data.length; i++) {
+        //  if (data[i] > threshold)
+        //    peak = data[i];
+        //    break;
+        //}
         //if (peak)
         //  console.log(peak);
       };

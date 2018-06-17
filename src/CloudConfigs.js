@@ -15,7 +15,11 @@ const basicConfig = {
   outlineColour: 'transparent',
   textFont: 'Raleway',
   fadeIn: 800,
-  dragControl: true
+  dragControl: true,
+  zoom: 1,
+  zoomMax: 2.0,
+  zoomMin: 0.75,
+  zoomStep:	0.025
 };
 
 export const DEFAULT_CONFIG = merge({}, basicConfig, {
