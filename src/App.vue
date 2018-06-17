@@ -1,8 +1,7 @@
 <template>
   <div id="app" @click.ctrl="dangerousActionsVisible = !dangerousActionsVisible">
-    <v-app>
+    <v-app dark>
       <v-toolbar
-        color="red lighten-3"
         dark
         app
         :clipped-left="$vuetify.breakpoint.mdAndUp"
@@ -92,7 +91,7 @@
   import Vue from 'vue';
   import Vuetify from 'vuetify';
   import { TagCanvas } from './vendor/tagcanvas';
-  import { debounce, map } from 'lodash';
+  import { map } from 'lodash';
   import { INITIAL_MOVEMENT, DEFAULT_CONFIG, getNextSpecialConfig } from './CloudConfigs';
   import WordStorage from './storage/WordStorage';
   import AudioStreamProcessor from './audio/AudioStreamProcessor';
@@ -134,7 +133,9 @@
         infoModalVisible: false,
         recording: false,
         growing: true,
-        belowThreshold: 0
+        belowThreshold: 0,
+        animating: false,
+        delayAnimationCounter: 0,
       };
     },
     computed: {
@@ -149,6 +150,7 @@
           this.startCapturingAudio();
         } else {
           this.stopCapturingAudio();
+          this.resetZoom();
           this.initializeRandomRotation();
         }
       }
@@ -164,6 +166,7 @@
     beforeDestroy() {
       window.TagCanvas.Delete(CANVAS_ID);
       this.stopRandomRotation();
+      this.stopCapturingAudio();
       window.removeEventListener('resize', this.updateCanvasAndRecreateCloud);
     },
     methods: {
@@ -314,9 +317,20 @@
         return Math.floor(Math.random() * Math.floor(max - min)) + min;
       },
       respondToPeak(max) {
-        const currentZoom = window.TagCanvas.tc[CANVAS_ID].zoom;
+        if (this.animating)
+          return;
 
-        if (max > 0.4) {
+        if (this.delayAnimationCounter < 3) {
+          this.delayAnimationCounter++;
+          return;
+        } else {
+          this.delayAnimationCounter = 0;
+        }
+
+        const currentZoom = window.TagCanvas.tc[CANVAS_ID].zoom;
+        console.log(max);
+
+        if (max > 0.2) {
           this.belowThreshold = 0;
           const zoomCount = Math.floor(max * 50);
           const nextZoom = currentZoom + DEFAULT_CONFIG.zoomStep * (this.growing ? 1 : -1);
@@ -326,24 +340,30 @@
           this.zoom(zoomCount, this.growing);
         } else {
           this.belowThreshold++;
-          if (this.belowThreshold > 10) {
-            const diffToNormal = currentZoom < 1 ? 1 - currentZoom : currentZoom - 1;
-            console.log('diff: ' + diffToNormal, 'steps: ' + Math.floor(diffToNormal / DEFAULT_CONFIG.zoomStep));
-            if (diffToNormal >= DEFAULT_CONFIG.zoomStep)
-              this.zoom(Math.floor(diffToNormal / DEFAULT_CONFIG.zoomStep), currentZoom < 1);
+          if (this.belowThreshold > 3) {
+            this.resetZoom();
           }
         }
       },
       zoom(steps, direction) {
+        this.animating = true;
         let zooms = 0;
         const doSingleZoomStep = () => {
           window.TagCanvas.Zoom(CANVAS_ID, direction);
           zooms++;
           if (zooms < steps) {
             setTimeout(doSingleZoomStep, 20);
+          } else {
+            this.animating = false;
           }
         };
         doSingleZoomStep();
+      },
+      resetZoom() {
+        const currentZoom = window.TagCanvas.tc[CANVAS_ID].zoom;
+        const diffToNormal = Number.parseFloat((currentZoom < 1 ? 1 - currentZoom : currentZoom - 1).toFixed(4));
+        if (diffToNormal >= DEFAULT_CONFIG.zoomStep)
+          this.zoom(Math.floor(diffToNormal / DEFAULT_CONFIG.zoomStep), currentZoom < 1);
       }
     }
   }
@@ -357,10 +377,14 @@
     font-family: 'Raleway', Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background-color: #fff;
   }
   .title {
     font-size: 4em !important;
-    color: palevioletred;
+  }
+  .input-group.input-group--focused {
+    color: white !important;
+    input {
+      caret-color: white !important;
+    }
   }
 </style>
