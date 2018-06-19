@@ -1,11 +1,12 @@
 <template>
-  <div id="app" @click.ctrl="dangerousActionsVisible = !dangerousActionsVisible">
+  <div id="app" @click.ctrl="toolbarVisible = !toolbarVisible">
     <v-app dark>
       <v-toolbar
         dark
-        app
-        :clipped-left="$vuetify.breakpoint.mdAndUp"
-        fixed>
+        v-show="toolbarVisible"
+        :fixed="toolbarVisible"
+        :app="toolbarVisible"
+        :clipped-left="$vuetify.breakpoint.mdAndUp">
         <v-toolbar-title>
           Interaktive Umfrage
         </v-toolbar-title>
@@ -15,17 +16,15 @@
           <v-icon v-else>mic</v-icon>
         </v-btn>
         <v-spacer></v-spacer>
-        <template v-if="dangerousActionsVisible">
-          <v-btn icon :disabled="previousWords.length === 0" @click.native.stop="undoLastOperation">
-            <v-icon>undo</v-icon>
-          </v-btn>
-          <v-btn icon @click.native.stop="removeModalVisible = true">
-            <v-icon>delete</v-icon>
-          </v-btn>
-          <v-btn icon @click.native.stop="resetModalVisible = true">
-            <v-icon>replay</v-icon>
-          </v-btn>
-        </template>
+        <v-btn icon :disabled="previousWords.length === 0" @click.native.stop="undoLastOperation">
+          <v-icon>undo</v-icon>
+        </v-btn>
+        <v-btn icon @click.native.stop="removeModalVisible = true">
+          <v-icon>delete</v-icon>
+        </v-btn>
+        <v-btn icon @click.native.stop="resetModalVisible = true">
+          <v-icon>replay</v-icon>
+        </v-btn>
         <v-btn icon @click.native.stop="infoModalVisible = true">
           <v-icon>feedback</v-icon>
         </v-btn>
@@ -127,15 +126,15 @@
         highlightTimer: null,
         randomRotationTimer: null,
         shakeCounter: 0,
-        dangerousActionsVisible: false,
+        toolbarVisible: false,
         removeModalVisible: false,
         resetModalVisible: false,
         infoModalVisible: false,
-        recording: false,
+        recording: true,
         growing: true,
         belowThreshold: 0,
         animating: false,
-        delayAnimationCounter: 0,
+        delayAnimationCounter: 0
       };
     },
     computed: {
@@ -144,6 +143,9 @@
       }
     },
     watch: {
+      toolbarVisible() {
+        Vue.nextTick(this.updateCanvasAndRecreateCloud);
+      },
       recording(recording) {
         if (recording) {
           this.stopRandomRotation();
@@ -157,11 +159,14 @@
     },
     created() {
       window.addEventListener('resize', this.updateCanvasAndRecreateCloud);
-      this.initializeRandomRotation();
+      if (this.recording) {
+        this.startCapturingAudio();
+      } else {
+        this.initializeRandomRotation();
+      }
     },
     mounted() {
       this.updateCanvasAndCreateCloud();
-      this.stopAndRestartRandomRotation();
     },
     beforeDestroy() {
       window.TagCanvas.Delete(CANVAS_ID);
@@ -172,7 +177,7 @@
     methods: {
       setCanvasDimensions() {
         this.canvasWidth = this.$refs.canvasContainer.offsetWidth;
-        this.canvasHeight = this.$refs.canvasContainer.offsetHeight - 32;
+        this.canvasHeight = this.$refs.canvasContainer.offsetHeight - 22;
       },
       updateCanvasAndCreateCloud() {
         if (!window.onload) {
