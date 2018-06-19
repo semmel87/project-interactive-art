@@ -15,6 +15,9 @@
           <v-icon v-if="recording">mic_off</v-icon>
           <v-icon v-else>mic</v-icon>
         </v-btn>
+        <v-slider label="Grenzwert" v-model="levelThreshold"
+                  thumb-label step="0.1" ticks min="0.1" max="1.5">
+        </v-slider>
         <v-spacer></v-spacer>
         <v-btn icon :disabled="previousWords.length === 0" @click.native.stop="undoLastOperation">
           <v-icon>undo</v-icon>
@@ -133,6 +136,7 @@
         infoModalVisible: false,
         recording: true,
         growing: true,
+        levelThreshold: 0.2,
         belowThreshold: 0,
         animating: false,
         delayAnimationCounter: 0
@@ -336,7 +340,7 @@
         const currentZoom = window.TagCanvas.tc[CANVAS_ID].zoom;
         console.log(max);
 
-        if (max > 0.2) {
+        if (max > this.levelThreshold) {
           this.belowThreshold = 0;
           const zoomCount = Math.floor(max * 50);
           const nextZoom = currentZoom + DEFAULT_CONFIG.zoomStep * (this.growing ? 1 : -1);
@@ -383,6 +387,11 @@
     font-family: 'Raleway', Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+  .toolbar {
+    .input-group.input-group--slider {
+      padding-top: 25px;
+    }
   }
   .title {
     font-size: 4em !important;
