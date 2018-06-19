@@ -1,6 +1,6 @@
 export default {
   Berlin: 5,
-  Hamburg: 4,
+  Amsterdam: 4,
   'Am Hügel 1': 6,
   Erfurt: 3,
   Parookaville: 3,
@@ -8,5 +8,6 @@ export default {
   'Rock am Ring': 6,
   Highfield: 5,
   Wacken: 3,
-  Tomorrowland: 4
+  Tomorrowland: 4,
+  Ibiza: 5
 }

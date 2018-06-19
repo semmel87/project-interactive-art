@@ -6,7 +6,9 @@ const basicConfig = {
   weight: true,
   weightFrom: 'data-weight',
   weightMode: 'both',
-  weightSize: 10,
+  //weightSize: 10,
+  weightSizeMin: 25,
+  weightSizeMax: 100,
   weightGradient: {
     0: '#b11743',
     0.5: '#febd2e',

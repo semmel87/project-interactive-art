@@ -271,7 +271,7 @@
       shake(tagId) {
         this.shakeCounter = 0;
         const shakeDefinedTimes = () => {
-          if (this.shakeCounter < 5) {
+          if (this.shakeCounter < 10) {
             this.shakeCounter++;
             this.doSingleShake(tagId, shakeDefinedTimes);
           } else {
