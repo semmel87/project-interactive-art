@@ -50,7 +50,8 @@
                 </ul>
               </canvas>
             </v-flex>
-            <v-layout row wrap align-center mt-3 mb-3>
+            <v-layout row wrap align-center mb-3
+              class="input-container">
               <v-flex xs5 offset-xs3>
                 <v-text-field
                   label="Füge einen Ort oder eine Location hinzu"
@@ -385,6 +386,9 @@
   }
   .title {
     font-size: 4em !important;
+  }
+  .input-container {
+    margin-top: -20px;
   }
   .input-group.input-group--focused {
     color: white !important;
