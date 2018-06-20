@@ -384,7 +384,7 @@
     overflow-y: auto;
   }
   #app {
-    font-family: 'Raleway', Helvetica, Arial, sans-serif;
+    font-family: 'Raleway', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
