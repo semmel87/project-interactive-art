@@ -1,5 +1,7 @@
 <template>
-  <div id="app" @click.ctrl="toolbarVisible = !toolbarVisible">
+  <div id="app"
+       @click.ctrl="toolbarVisible = !toolbarVisible"
+       oncontextmenu="return false">
     <v-app dark>
       <v-toolbar
         dark
