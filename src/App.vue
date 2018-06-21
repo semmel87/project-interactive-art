@@ -10,7 +10,7 @@
         :app="toolbarVisible"
         :clipped-left="$vuetify.breakpoint.mdAndUp">
         <v-toolbar-title>
-          Interaktive Umfrage
+          Word Sphere
         </v-toolbar-title>
         <v-spacer></v-spacer>
         <v-btn v-if="userMediaSupported" icon @click.native.stop="recording = !recording">
@@ -59,7 +59,7 @@
               class="input-container">
               <v-flex xs5 offset-xs3>
                 <v-text-field
-                  label="Füge einen Ort oder eine Location hinzu"
+                  label="Füge eine Location oder ein Event hinzu"
                   v-model="userInput"
                   @keyup.enter="addUserInputToCloud">
                 </v-text-field>
